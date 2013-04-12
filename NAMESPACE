@@ -1,0 +1,24 @@
+export(warn, warnProb, warnOptim, lerna)
+importFrom(MASS, kde2d)
+
+# warn S3methods
+S3method(warn, default)
+S3method(print, warn)
+S3method(summary, warn) 
+S3method(plot, warn)
+
+# warnProb S3methods
+S3method(warnProb, default)
+S3method(print, warnProb)
+S3method(summary, warnProb) 
+S3method(plot, warnProb)
+
+# warnSummary S3method
+S3method(print, warnSummary)
+
+# warnProbSummary S3method
+S3method(print, warnProbSummary)
+
+# warnOptim S3method
+S3method(warnOptim, default)
+S3method(print, warnOptim)
