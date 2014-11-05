@@ -24,7 +24,7 @@
   The following three results on d15N are plotted against age, the original measured ratios of non-adult bone collagen (Measured d15N), modeled ratios of non-adult bone collagen (Modeled d15N), and modeled ratios of collagen synthesized entirely from consumed foods in the last half year (Modeld diet). These results are calculated in \code{\link{warn}}. Mean d15Ns of adult females and all adults can also be plotted.
 }
 \references{
-  Tsutaya, T., and Yoneda, M. 2013. WARN: an R package for quantitative reconstruction of weaning ages in archaeological populations using bone collagen nitrogen isotope ratios. \href{http://arxiv.org/abs/1304.2468}{arXiv:1304.2468}.
+  Tsutaya, T., and Yoneda, M. (2013). Quantitative reconstruction of weaning ages in archaeological human populations using bone collagen nitrogen isotope ratios and approximate Bayesian computation. \emph{PLoS ONE} \bold{8}, e72327.
 }
 \seealso{
   \code{\link{WARN}}, \code{\link{warn}}, \code{\link{warnProb}}, \code{\link{summary.warn}}

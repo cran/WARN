@@ -23,7 +23,7 @@
   \item{particle}{the number of particles used in SMC sampling.}
 }
 \references{
-  Tsutaya, T., and Yoneda, M. 2013. WARN: an R package for quantitative reconstruction of weaning ages in archaeological populations using bone collagen nitrogen isotope ratios. \href{http://arxiv.org/abs/1304.2468}{arXiv:1304.2468}.
+  Tsutaya, T., and Yoneda, M. (2013). Quantitative reconstruction of weaning ages in archaeological human populations using bone collagen nitrogen isotope ratios and approximate Bayesian computation. \emph{PLoS ONE} \bold{8}, e72327.
 }
 \seealso{
   \code{\link{WARN}}, \code{\link{warn}}, \code{\link{warnProb}}, \code{\link{plot.warn}}

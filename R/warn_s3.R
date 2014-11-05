@@ -1,8 +1,10 @@
 # =====R code=========================
 # Weaning age reconstruction using d15N.
 # ==============================
-# 2013-01-14: Tsutaya T: All files are combined and variable names are integrated.
+# 2013-01-14: Tsutaya T: combined all files,
+#  integrated names of variable.
 # https://sites.google.com/site/leihcrev/r/writing-your-own-functions
+# 2014-11-03: Tsutaya T: added stop() message for 'age' > 10.
 # ==============================
 # OBJECTIVE ----------
 # This program performs Apporoximate Bayesian Computation with SMC
@@ -31,6 +33,10 @@ warn.default <- function(age, d15N, female.mean, female.sd = NA,
 #
 # return:
 #  Class "warn" object.
+  if(max(age) > 10){
+    stop(message=">10 years of 'age'")
+  }
+
   warn.result <- WARN(age = age,
     d15N = d15N,
     female.mean = female.mean,

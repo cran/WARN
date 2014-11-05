@@ -5,6 +5,7 @@
 # 2013-01-22: Tsutaya T: Added warpper function for optim.
 # 2013-02-09: Tsutaya T: Prior was changed.
 # 2013-04-11: Tsutaya T: Added conditionnig on tolerances.
+# 2014-11-03: Tsutaya T: Deleted call to 'MASS' and added "MASS::" to width.SJ.
 # ==============================
 # OBJECTIVE ----------
 # This program performs Apporoximate Bayesian Computation with SMC
@@ -808,15 +809,10 @@ CalcPostDensity <- function(posterior.x, posterior.y = NA,
   times <- 10^(decimal)
 
   if(is.2d){
-    # Library MASS has been already loaded?
-    if(!any(search() == "package:MASS")){
-      library(MASS)
-    }
-
     # Preliminary density.
     d1 <- kde2d(x = posterior.x, y = posterior.y,
-      h = c(width.SJ(posterior.x, method = "dpi"),
-        width.SJ(posterior.y, method = "dpi")))
+      h = c(MASS::width.SJ(posterior.x, method = "dpi"),
+        MASS::width.SJ(posterior.y, method = "dpi")))
 
     # Adjust density to given decimal points.
     min.dx <- floor(min(d1$x) * times) / times
@@ -829,13 +825,13 @@ CalcPostDensity <- function(posterior.x, posterior.y = NA,
 
     # Adjested density.
     d2 <- kde2d(x = posterior.x, y = posterior.y,
-      h = c(width.SJ(posterior.x, method = "dpi"),
-        width.SJ(posterior.y, method = "dpi")),
+      h = c(MASS::width.SJ(posterior.x, method = "dpi"),
+        MASS::width.SJ(posterior.y, method = "dpi")),
       n = c(n.dx, n.dy), lims = c(min.dx, max.dx, min.dy, max.dy))
   }else{
     # Preliminary density.
     d1 <- density(posterior.x,
-      bw = width.SJ(posterior.x, method = "dpi"))
+      bw = MASS::width.SJ(posterior.x, method = "dpi"))
 
     # Adjust density to given decimal points.
     min.dx <- floor(min(d1$x) * times) / times
@@ -844,7 +840,7 @@ CalcPostDensity <- function(posterior.x, posterior.y = NA,
 
     # Adjested density.
     d2 <- density(posterior.x,
-      bw = width.SJ(posterior.x, method = "dpi"),
+      bw = MASS::width.SJ(posterior.x, method = "dpi"),
       n = n.dx, from = min.dx, to = max.dx)
   }
 

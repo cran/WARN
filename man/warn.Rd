@@ -50,7 +50,7 @@
 \references{
   Sisson, S. A., Fan, Y., and Tanaka, M. M. (2007, 2009). Sequential Monte Carlo without likelihoods. \emph{Proc. Nat. Acad. Sci.} \bold{104}, 1760--1765.\cr
   \cr
-  Tsutaya, T., and Yoneda, M. (2013). WARN: an R package for quantitative reconstruction of weaning ages in archaeological populations using bone collagen nitrogen isotope ratios. \href{http://arxiv.org/abs/1304.2468}{arXiv:1304.2468}.
+  Tsutaya, T., and Yoneda, M. (2013). Quantitative reconstruction of weaning ages in archaeological human populations using bone collagen nitrogen isotope ratios and approximate Bayesian computation. \emph{PLoS ONE} \bold{8}, e72327.
 }
 \author{
   Takumi Tsutaya developed this model.
