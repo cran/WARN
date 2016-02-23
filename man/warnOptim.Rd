@@ -27,7 +27,7 @@
   \code{warnOptim} directly returns a result list of \code{\link{optim}}.
 }
 \seealso{
-  \code{\link{WARN}}, \code{\link{warn}}, \code{\link{warnProb}}
+  \code{\link{WARN}}, \code{\link{warn}}, \code{\link{warnCI}}, \code{\link{warnProb}}
 }
 \examples{
 ## Data from the Lerna population.

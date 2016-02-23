@@ -20,7 +20,7 @@
 }
 \value{
   \code{warnProb} returns an object of \code{\link{class}} \code{"warnProb"} which is a subclass of \code{"warn"}.\cr
-  The function \code{\link{summary}} and \code{\link{plot}} are used to obtain and indicate a summary and figure of the results, respectively.\cr
+  The functions \code{\link{summary}} and \code{\link{plot}} are used to obtain and indicate a summary and figure of the results, respectively.\cr
   An object of class \code{"warnProb"} at least has following list components in addition to those succeeded from \code{"warn"}:\cr
   \item{probability}{posterior probability of parameter that range between the designated range.}
   \item{range}{a vector giving the range of the intended weanig parameter.}
@@ -33,7 +33,7 @@
   Takumi Tsutaya developed this model.
 }
 \seealso{
-  \code{\link{WARN}}, \code{\link{warn}}, \code{\link{summary.warnProb}}, \code{\link{plot.warnProb}}
+  \code{\link{WARN}}, \code{\link{warn}}, \code{\link{warnCI}}, \code{\link{summary.warnProb}}, \code{\link{plot.warnProb}}
 }
 \examples{
 ## Data from the Lerna population.

@@ -24,7 +24,7 @@
   \item{tolerances}{a vector of decreasing torelances used in the SMC sampling. The default is \code{c(2.0, 1.0, 0.5, 0.25, 0.125, 0.0625, 0)}.}
 }
 \details{
-  The \code{warn} esimates the age at the start and end of weaning, enrichment of d15N through maternal to infant tissue, and d15N value of collagen synthesized entirely from weaning foods with their posterior probabilities. Probabilities are estimated by SMC with partial rejection control, and the algorithm was derived from Sissons et al. (2007, 2009). The posterior probabilities are obtained as a result of kernel density estimation, a product of \code{\link{kde2d}} in \pkg{MASS} package for weaning ages, and \code{\link{density}} for enrichment and weaning foods. The model used to describe the change in d15N during weaning contains a new estimate of bone collagen turnover rates in non-adults, and is shown in Tsutaya and Yoneda (2013).
+  The \code{warn} esimates the age at the start and end of weaning, enrichment of d15N through maternal to infant tissue, and d15N value of collagen synthesized entirely from weaning foods with their posterior probabilities. Probabilities are estimated by SMC with partial rejection control, and the algorithm was derived from Sisson et al. (2007, 2009). The posterior probabilities are obtained as a result of kernel density estimation, a product of \code{\link{kde2d}} in \pkg{MASS} package for weaning ages, and \code{\link{density}} for enrichment and weaning foods. The model used to describe the change in d15N during weaning contains a new estimate of bone collagen turnover rates in non-adults, and is shown in Tsutaya and Yoneda (2013).
 }
 \value{
   \code{warn} returns an object of \code{\link{class}} \code{"warn"}.\cr
@@ -48,7 +48,7 @@
   The band-width of kernel density estimation (i.e., \code{h} in \code{\link{kde2d}} and \code{bw} in \code{\link{density}}) is selected by SJ method, \code{\link{width.SJ}} in \pkg{MASS}, with "direct plug-in".
 }
 \references{
-  Sisson, S. A., Fan, Y., and Tanaka, M. M. (2007, 2009). Sequential Monte Carlo without likelihoods. \emph{Proc. Nat. Acad. Sci.} \bold{104}, 1760--1765.\cr
+  Sisson, S. A., Fan, Y., and Tanaka, M. M. (2007, 2009). Sequential Monte Carlo without likelihoods. \emph{Proc. Natl. Acad. Sci.} \bold{104}, 1760--1765.\cr
   \cr
   Tsutaya, T., and Yoneda, M. (2013). Quantitative reconstruction of weaning ages in archaeological human populations using bone collagen nitrogen isotope ratios and approximate Bayesian computation. \emph{PLoS ONE} \bold{8}, e72327.
 }
@@ -56,7 +56,7 @@
   Takumi Tsutaya developed this model.
 }
 \seealso{
-  \code{\link{WARN}}, \code{\link{warnProb}}, \code{\link{summary.warn}}, \code{\link{plot.warn}}
+  \code{\link{WARN}}, \code{\link{warnCI}}, \code{\link{warnProb}}, \code{\link{summary.warn}}, \code{\link{plot.warn}}
 }
 \examples{
 ## Data from the Lerna population.

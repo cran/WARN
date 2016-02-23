@@ -12,11 +12,11 @@
 \tabular{ll}{
   Package: \tab WARN\cr
   Type: \tab Package\cr
-  Version: \tab 1.1\cr
-  Date: \tab 2014-11-04\cr
-  License: \tab GPL\cr
+  Version: \tab 1.2-0\cr
+  Date: \tab 2016-02-23\cr
+  License: \tab GPL (>= 3)\cr
 }
-  Function \code{\link{warn}} esimates the age at the start and end of weaning, enrichment of d15N through maternal to infant tissue, and d15N value of collagen synthesized entirely from weaning foods with their posterior probabilities. The \code{warn} performs approximate Bayesian computation (ABC) for a given set of estimated ages and measured d15N of non-adults from the skeletal population. Function \code{\link{warnProb}} calculate posterior probabilities under a given class \code{"warn"} object and given parameter ranges.  This package adopts S3 class. The detail of mathematical models is described in Tsutaya and Yoneda (2013).
+  Function \code{\link{warn}} esimates the age at the start and end of weaning, enrichment of d15N through maternal to infant tissue, and d15N value of collagen synthesized entirely from weaning foods with their posterior probabilities. The \code{warn} performs approximate Bayesian computation (ABC) for a given set of estimated ages and measured d15N of non-adults from the skeletal population. Function \code{\link{warnCI}} calculates credible intervals (CIs) of posterior probabilities under a given class \code{"warn"} object and a given threshold of CIs. Function \code{\link{warnProb}} calculate posterior probabilities under a given class \code{"warn"} object and given parameter ranges.  This package adopts S3 class. The detail of mathematical models is described in Tsutaya and Yoneda (2013).
 }
 \author{
   Takumi Tsutaya <tsutayatakumi@gmail.com>
@@ -26,8 +26,8 @@
 }
 \keyword{ package }
 \seealso{
-  \code{\link{warn}}, \code{\link{warnOptim}}, \code{\link{warnProb}}
+  \code{\link{warn}}, \code{\link{warnCI}}, \code{\link{warnOptim}}, \code{\link{warnProb}}
 }
 \examples{
-## See ?warn and ?warnProb for examples.
+## See ?warn, ?warnCI, and ?warnProb for examples.
 }

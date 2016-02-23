@@ -1,5 +1,10 @@
-export(warn, warnProb, warnOptim, lerna)
-importFrom(MASS, kde2d)
+export(warn, warnCI, warnProb, warnOptim, lerna)
+importFrom("graphics", "arrows", "contour", "image", "legend", "lines",
+	"plot", "points", "rect")
+importFrom("grDevices", "gray")
+importFrom("MASS", "kde2d")
+importFrom("stats", "density", "dnorm", "integrate", "optim", "rnorm",
+	"sd")
 
 # warn S3methods
 S3method(warn, default)
@@ -7,18 +12,23 @@ S3method(print, warn)
 S3method(summary, warn) 
 S3method(plot, warn)
 
+# warnCI S3methods
+S3method(warnCI, default)
+S3method(print, warnCI)
+S3method(plot, warnCI)
+
+# warnOptim S3method
+S3method(warnOptim, default)
+S3method(print, warnOptim)
+
 # warnProb S3methods
 S3method(warnProb, default)
 S3method(print, warnProb)
 S3method(summary, warnProb) 
 S3method(plot, warnProb)
 
-# warnSummary S3method
-S3method(print, warnSummary)
-
 # warnProbSummary S3method
 S3method(print, warnProbSummary)
 
-# warnOptim S3method
-S3method(warnOptim, default)
-S3method(print, warnOptim)
+# warnSummary S3method
+S3method(print, warnSummary)

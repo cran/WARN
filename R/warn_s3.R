@@ -60,7 +60,7 @@ print.warn <- function(x, ...){
 # returns:
 #  Pinrt of MDEs for the object.
   cat("Call:\n")
-  print(x$call) # Which method did match.．
+  print(x$call) # Which method did match.
   cat("\nMDEs:\n")
   print(x$mde)
   cat("\nJoint probability of the waening ages:\n")
@@ -141,7 +141,7 @@ print.warnSummary <- function(x, ...){
 # returns:
 #  Pinrt of summaries for the object.
   cat("Call:\n")
-  print(x$call) # Which method did match.．
+  print(x$call) # Which method did match.
   cat("\nMDEs and marginal probabilities:\n")
   print(x$mde)
   cat("\nJoint probability of the waening ages:\n")
@@ -217,7 +217,7 @@ print.warnProb <- function(x, ...){
 # returns:
 #  Print of probability for the selected ranges.
   cat("Call:\n")
-  print(x$call) # Which method did match.．
+  print(x$call) # Which method did match.
   cat("\nProbability:\n")
   print(x$probability)
 
@@ -314,7 +314,7 @@ print.warnProbSummary <- function(x, ...){
 # returns:
 #  Pinrt of summaries for the object.
   cat("Call:\n")
-  print(x$call) # Which method did match.．
+  print(x$call) # Which method did match.
   cat("\nWeaning parameter:\n")
   print(x$weaning.par)
   cat("\nRange:\n")
@@ -375,11 +375,121 @@ print.warnOptim <- function(x, ...){
   names(par.named) <- c("t1", "t2", "enrich", "wnfood")
 
   cat("Call:\n")
-  print(x$call) # Which method did match.．
+  print(x$call) # Which method did match.
   cat("\nOptimized parameters:\n")
   print(par.named)
 
   cat("\n")
 }
 
+# ==============================
+# Define the class "warnCI".
+# ==============================
+warnCI <- function(object, threshold){
+  UseMethod("warnCI")
+}
+
+warnCI.default <- function(object, threshold = 0.95){
+# Default method for S3 "warnCI" class (= CalcCI).
+#
+# arg:
+#  object: An object which was defined as "warnCI" class.
+#  threshold: A scalar or vector indicating threshold of CI
+#   for age, enrich, wnfood. If scalar, value is repeated.
+#   From 0 to 1.
+#
+# return:
+#  Class "warnCI" object.
+  # Threshold.
+  if(length(threshold) == 1){
+    threshold <- rep(threshold, 3)
+  }
+
+  # Calculate CIs.
+  warnci.age <- CalcCI2D(
+    kde = object$kde.age,
+    mde.x = object$mde[1, 1],
+    mde.y = object$mde[2, 1],
+    threshold = threshold[1])
+  warnci.enrich <- CalcCI1D(
+    kde = object$kde.enrich,
+    mde.x = object$mde[3, 1],
+    threshold = threshold[2])
+  warnci.wnfood <- CalcCI1D(
+    kde = object$kde.wnfood,
+    mde.x = object$mde[4, 1],
+    threshold = threshold[3])
+  names(threshold) <- c("age", "enrich", "wnfood")
+
+  warnci.result <- list(
+    ci.age = warnci.age,
+    ci.enrich = warnci.enrich,
+    ci.wnfood = warnci.wnfood,
+    ci.threshold = threshold)
+  
+  # Another slots.
+  result <- c(object, warnci.result)
+  result$call <- match.call()
+  class(result) <- "warnCI"
+
+  return(result)
+}
+
+print.warnCI <- function(x, ...){
+# Print method for S3 "warnCI" class.
+#
+# arg:
+#  x: An object which was defined as "warnCI" class.
+#
+# returns:
+#  Print of calculated ranges and its probability.
+  cat("Call:\n")
+  print(x$call) # Which method did match.
+  cat("\nCI and its probability:\n")
+  cat("\nWeaning ages:\n")
+  print(x$ci.age)
+  cat("\nEnrichment of d15N from mother:\n")
+  print(x$ci.enrich)
+  cat("\nd15N of collagen derived entirelly from weaning foods:\n")
+  print(x$ci.wnfood)
+
+  cat("\n")
+}
+
+plot.warnCI <- function(x, weaning.par = "age", ...){
+# Plot method for S3 "warnCI" class.
+#
+# arg:
+#  x: An object which was defined as "warnCI" class.
+#  weaning.par: Weaning parameters interested, c("age", "enrich", "wnfood").
+#  \dots: Passed to DrawCI (= plot).
+#   i.e. age: is.legend, is.image, ...
+#   i.e. enrich, wnfood: is.legend, is.prior, ...
+#
+# function:
+#  DrawCI1D
+#  DrawCI2D
+#
+# returns:
+#  plot of summaries for the probability estimation.
+#
+# note:
+#  Dispatch for weaning paramters is working.
+  if(weaning.par == "age"){
+    DrawProb2D(kde = x$kde.age,
+      range.x1 = x$ci.age$range[1:2],
+      range.y1 = x$ci.age$range[3:4],
+      mde = x$mde[1:2, 1], ...)
+  }else if(weaning.par == "enrich"){
+    DrawProb1D(kde = x$kde.enrich,
+      range.x1 = x$ci.enrich$range,
+      mde = x$mde[3, 1], ...)
+  }else if(weaning.par == "wnfood"){
+    DrawProb1D(kde = x$kde.wnfood,
+      range.x1 = x$ci.wnfood$range,
+      mde = x$mde[4, 1], ...)
+  }else{
+    stop("Choose correct weaning paramters from c(\"age\", \"enrich\", \"wnfood\").\n")
+  }
+}
 

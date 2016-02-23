@@ -25,7 +25,7 @@
   Tsutaya, T., and Yoneda, M. (2013). Quantitative reconstruction of weaning ages in archaeological human populations using bone collagen nitrogen isotope ratios and approximate Bayesian computation. \emph{PLoS ONE} \bold{8}, e72327.
 }
 \seealso{
-  \code{\link{WARN}}, \code{\link{warn}}, \code{\link{warnProb}}, \code{\link{summary.warnProb}}
+  \code{\link{WARN}}, \code{\link{warn}}, \code{\link{warnCI}}, \code{\link{warnProb}}, \code{\link{summary.warnProb}}
 }
 \examples{
 ## See ?warnProb for examples.

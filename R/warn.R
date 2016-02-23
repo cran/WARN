@@ -7,13 +7,14 @@
 # 2013-04-11: Tsutaya T: Added conditionnig on tolerances.
 # 2014-11-03: Tsutaya T: Deleted call to 'MASS' and added "MASS::" to width.SJ.
 # ==============================
-# OBJECTIVE ----------
+# OBJECTIVE ==========
 # This program performs Apporoximate Bayesian Computation with SMC
 #  adopting Partial Rejection Control (PRC)
 #  in order to calculates posterior distributuions
 #  of the weaning ages and weaning parameters.
 # ==============================
-# FUNCTION DEFINITIONS ----------
+# FUNCTION DEFINITIONS ==========
+# warn --------------------
 ## Process assigned data.
 SubtractAgeResidue <- function(age){
 # Calculate age before one unit time and its residue for a given age vector.
@@ -1037,7 +1038,7 @@ WARN <- function(age, d15N, female.mean, female.sd = NA,
     form = form))
 }
 
-## Figure.
+# warnProb --------------------
 CalcProb1D <- function(kde, range.x){
 # Calculate KDE-probability for given weaning parameter ranges.
 #
@@ -1116,6 +1117,7 @@ CalcProb2D <- function(kde, range.x, range.y){
   return(result)
 }
 
+# graphics --------------------
 DrawProb1D <- function(kde, range.x1 = NA, mde = NA,
   is.legend = TRUE, is.prior = FALSE, hyper.par = NA, ...){
 # Draw KDE-probability with rectangle showing a given weaning parameter range.
@@ -1356,6 +1358,185 @@ DrawMDE <- function(par.mde, d15N, age,
     xjust = 1, yjust = 1)
   }
 }
+
+# warnCI --------------------
+CalcCI2D <- function(kde, mde.x, mde.y,
+  threshold = 0.95){
+# Calcurate KDE-probability  and its range for given CI from kde data.
+#  This function works for "age" of the weaning parameters.
+#
+# args:
+#  kde: Product of kde2d(). Usually a list contains x, y, z.
+#  mde.x/y: Weaning age of MDE estimates.
+#   Fractional point lower than e-002 is omitted.
+#   x: t1, and y: t2.
+#  threshold: A scalar indicating threshold of CI. From 0 to 1.
+#
+# returns:
+#  A list contains $kde, $probability,
+#   and $range c(from.x, to.x, from.y, to.y).
+#
+# depend:
+#  CalcProb2D
+#
+  # Warnings.
+  if(threshold > 1){
+    stop(message="c(0, 1) for the range of 'threshold'")
+  }
+  # Variables
+  nega <- c(-0.1, 0)
+  posi <- c(0, 0.1)
+
+  # Initial values.
+  range.new.x <- rep(mde.x, 2)
+  range.new.y <- rep(mde.y, 2)
+  prob.mde <- CalcProb2D(
+    kde = kde,
+    range.x = range.new.x,
+    range.y = range.new.y)
+  probability.new <- prob.mde$probability
+
+  # If MDE is Ok, return MDE.
+  if(probability.new > threshold){
+    result <- list(
+#      kde = kde,
+      probability = probability.new,
+      range = c(
+        prob.mde$range[1],
+        prob.mde$range[2],
+        prob.mde$range[3],
+        prob.mde$range[4]))
+    return(result)
+  }
+
+  # Searching
+  while(probability.new < threshold){
+    names(range.new.x) <- NULL
+    names(range.new.y) <- NULL
+
+    # Searching for (expanding to) the 4 directions.
+    prob.dash <- list(
+      prob.nx = CalcProb2D(
+        kde = kde,
+        range.x = range.new.x + nega,
+        range.y = range.new.y),
+      prob.px = CalcProb2D(
+        kde = kde,
+        range.x = range.new.x + posi,
+        range.y = range.new.y),
+      prob.xn = CalcProb2D(
+        kde = kde,
+        range.x = range.new.x,
+        range.y = range.new.y + nega),
+      prob.xp = CalcProb2D(
+        kde = kde,
+        range.x = range.new.x,
+        range.y = range.new.y + posi))
+
+    # Select new range with max robability.
+    probability.dash <- c(
+      prob.dash[[1]]$probability,
+      prob.dash[[2]]$probability,
+      prob.dash[[3]]$probability,
+      prob.dash[[4]]$probability)
+    ind.max <- match(max(probability.dash), probability.dash)
+    prob.new <- prob.dash[[ind.max]]
+
+    # Variables for the next searching.
+    probability.new <- prob.new$probability
+    range.new.x <- prob.new$range[1:2]
+    range.new.y <- prob.new$range[3:4]
+  }
+
+  # Results.
+  result <- list(
+#    kde = kde,
+    probability = probability.new,
+    range = c(range.new.x, range.new.y))
+
+  return(result)
+}
+
+
+CalcCI1D <- function(kde, mde.x,
+  threshold = 0.95){
+# Calcurate KDE-probability  and its range for given CI from kde data.
+#  This function works for "enrich" and "wnfood" of the weaning parameters.
+#
+# args:
+#  kde: Product of kde2d(). Usually a list contains x, y, z.
+#  mde.x/y: Weaning age of MDE estimate.
+#   Fractional point lower than e-002 is omitted.
+#  threshold: A scalar indicating threshold of CI. From 0 to 1.
+#
+# returns:
+#  A list contains $kde, $probability,
+#   and $range c(from.x, to.x).
+#
+# depend:
+#  CalcProb1D
+#
+  # Warnings.
+  if(threshold > 1){
+    stop(message="c(0, 1) for the range of 'threshold'")
+  }
+
+  # Variables
+  nega <- c(-0.1, 0)
+  posi <- c(0, 0.1)
+
+  # Initial values.
+  range.new.x <- rep(mde.x, 2)
+  prob.mde <- CalcProb1D(
+    kde = kde,
+    range.x = range.new.x)
+  probability.new <- prob.mde$probability
+
+  # If MDE is Ok, return MDE.
+  if(probability.new > threshold){
+    result <- list(
+#      kde = kde,
+      probability = probability.new,
+      range = c(
+        prob.mde$range[1],
+        prob.mde$range[2]))
+    return(result)
+  }
+
+  # Searching
+  while(probability.new < threshold){
+    names(range.new.x) <- NULL
+
+    # Searching for (expanding to) the 4 directions.
+    prob.dash <- list(
+      prob.n = CalcProb1D(
+        kde = kde,
+        range.x = range.new.x + nega),
+      prob.p = CalcProb1D(
+        kde = kde,
+        range.x = range.new.x + posi))
+
+    # Select new range with max robability.
+    probability.dash <- c(
+      prob.dash[[1]]$probability,
+      prob.dash[[2]]$probability)
+    ind.max <- match(max(probability.dash), probability.dash)
+    prob.new <- prob.dash[[ind.max]]
+
+    # Variables for the next searching.
+    probability.new <- prob.new$probability
+    range.new.x <- prob.new$range
+  }
+
+  # Results.
+  result <- list(
+#    kde = kde,
+    probability = probability.new,
+    range = range.new.x)
+
+  return(result)
+}
+
 # ==============================
 # NOTE ----------
 # ABC-SMC-PRC algorithm was quoted from
