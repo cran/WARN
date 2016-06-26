@@ -6,6 +6,7 @@
 # 2013-02-09: Tsutaya T: Prior was changed.
 # 2013-04-11: Tsutaya T: Added conditionnig on tolerances.
 # 2014-11-03: Tsutaya T: Deleted call to 'MASS' and added "MASS::" to width.SJ.
+# 2016-06-23: Tsutaya T: Fixed bug (>2 values in result of which()) in CalcProb1D and CalcProb2D.
 # ==============================
 # OBJECTIVE ==========
 # This program performs Apporoximate Bayesian Computation with SMC
@@ -811,7 +812,7 @@ CalcPostDensity <- function(posterior.x, posterior.y = NA,
 
   if(is.2d){
     # Preliminary density.
-    d1 <- kde2d(x = posterior.x, y = posterior.y,
+    d1 <- MASS::kde2d(x = posterior.x, y = posterior.y,
       h = c(MASS::width.SJ(posterior.x, method = "dpi"),
         MASS::width.SJ(posterior.y, method = "dpi")))
 
@@ -825,7 +826,7 @@ CalcPostDensity <- function(posterior.x, posterior.y = NA,
     n.dy <- (max.dy - min.dy) * times + 1
 
     # Adjested density.
-    d2 <- kde2d(x = posterior.x, y = posterior.y,
+    d2 <- MASS::kde2d(x = posterior.x, y = posterior.y,
       h = c(MASS::width.SJ(posterior.x, method = "dpi"),
         MASS::width.SJ(posterior.y, method = "dpi")),
       n = c(n.dx, n.dy), lims = c(min.dx, max.dx, min.dy, max.dy))
@@ -1061,7 +1062,9 @@ CalcProb1D <- function(kde, range.x){
   range.x2[2] <- ifelse(range.x2[2] > max(kde.x), max(kde.x), range.x2[2])
 
   # Calculate the indexes of the ranges.
-  ind.x <- c(which(kde.x == range.x2[1]), which(kde.x == range.x2[2]))
+  ind.x <- c(
+    min(which(kde.x == range.x2[1])),
+    max(which(kde.x == range.x2[2])))
 
   # Calculate the probability of targetted ranges.
   target <- sum(kde$y[((ind.x[1]):(ind.x[2]))])
@@ -1102,8 +1105,12 @@ CalcProb2D <- function(kde, range.x, range.y){
   range.y2[2] <- ifelse(range.y2[2] > max(kde.y), max(kde.y), range.y2[2])
 
   # Calculate the indexes of the ranges.
-  ind.x <- c(which(kde.x == range.x2[1]), which(kde.x == range.x2[2]))
-  ind.y <- c(which(kde.y == range.y2[1]), which(kde.y == range.y2[2]))
+  ind.x <- c(
+    min(which(kde.x == range.x2[1])),
+    max(which(kde.x == range.x2[2])))
+  ind.y <- c(
+    min(which(kde.y == range.y2[1])),
+    max(which(kde.y == range.y2[2])))
 
   # Calculate the probability of targetted ranges.
   target <- sum(kde$z[((ind.x[1]):(ind.x[2])), (ind.y[1]):(ind.y[2])])
