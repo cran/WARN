@@ -7,6 +7,7 @@
 # 2013-04-11: Tsutaya T: Added conditionnig on tolerances.
 # 2014-11-03: Tsutaya T: Deleted call to 'MASS' and added "MASS::" to width.SJ.
 # 2016-06-23: Tsutaya T: Fixed bug (>2 values in result of which()) in CalcProb1D and CalcProb2D.
+# 2017-02-16: Tsutaya T: Fixed possible endless calculation in CalcProb1D and CalcProb2D.
 # ==============================
 # OBJECTIVE ==========
 # This program performs Apporoximate Bayesian Computation with SMC
@@ -1417,6 +1418,7 @@ CalcCI2D <- function(kde, mde.x, mde.y,
   }
 
   # Searching
+  calc.time <- 0 # If this values become >10000, calculation will stop.
   while(probability.new < threshold){
     names(range.new.x) <- NULL
     names(range.new.y) <- NULL
@@ -1453,6 +1455,12 @@ CalcCI2D <- function(kde, mde.x, mde.y,
     probability.new <- prob.new$probability
     range.new.x <- prob.new$range[1:2]
     range.new.y <- prob.new$range[3:4]
+
+    # Check for endlessness.
+    calc.time <- calc.time + 1
+    if(calc.time > 10000){
+      stop(message="too wide CI to calculate")
+    }
   }
 
   # Results.
@@ -1511,6 +1519,7 @@ CalcCI1D <- function(kde, mde.x,
   }
 
   # Searching
+  calc.time <- 0 # If this values become >100, calculation will stop.
   while(probability.new < threshold){
     names(range.new.x) <- NULL
 
@@ -1533,6 +1542,12 @@ CalcCI1D <- function(kde, mde.x,
     # Variables for the next searching.
     probability.new <- prob.new$probability
     range.new.x <- prob.new$range
+
+    # Check for endlessness.
+    calc.time <- calc.time + 1
+    if(calc.time > 200){
+      stop(message="too wide CI to calculate")
+    }
   }
 
   # Results.
