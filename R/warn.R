@@ -8,6 +8,7 @@
 # 2014-11-03: Tsutaya T: Deleted call to 'MASS' and added "MASS::" to width.SJ.
 # 2016-06-23: Tsutaya T: Fixed bug (>2 values in result of which()) in CalcProb1D and CalcProb2D.
 # 2017-02-16: Tsutaya T: Fixed possible endless calculation in CalcProb1D and CalcProb2D.
+# 2017-11-26: Tsutaya T: Added "modeled d15N" and "modeled diet" in returned values of warn.
 # ==============================
 # OBJECTIVE ==========
 # This program performs Apporoximate Bayesian Computation with SMC
@@ -1246,6 +1247,7 @@ DrawMDE <- function(par.mde, d15N, age,
   adult.mean = NA, adult.sd = 0, 
   is.legend = TRUE,
   is.female = TRUE,
+  plot = TRUE,
   cex = 1, ...){
 # Draw the KDE-MDE results.
 #
@@ -1261,6 +1263,7 @@ DrawMDE <- function(par.mde, d15N, age,
 #  adult.sd: SD of adult d15N values.
 #  is.legend: If TRUE, a legend is drawn.
 #  is.female: If FALSE, female mean is not drawn.
+#  plot: logical. If TRUE (default), a figure is plotted, otherwise a list of d15N changes in modeled bone and modeled diet is returned.
 #  ...: Arguments passed to plot().
 #
 # returns:
@@ -1271,12 +1274,17 @@ DrawMDE <- function(par.mde, d15N, age,
 #  CalcNonmilkProp
 #  IntNonmilkProp
 #  CalcRefBone
+
+  #  xmax <- ceiling(max(age) * 2) / 2 + 1
+  #  age.reference <- SubtractAgeResidue(seq(0, xmax - 1, 0.5))
+
   xmax <- ceiling(max(age) * 2) / 2 + 1
-  age.reference <- SubtractAgeResidue(seq(0, xmax - 1, 0.5))
+  age.reference <- SubtractAgeResidue(seq(0, 10, 0.5))
   age.ref <- age.reference[ , 1]
   residue <- age.reference[ , 2]
   subtract <- age.reference[ , 3]
   turnover.ref <- ArrangeColTurnover(age.ref, subtract)
+  is.ref <- age.ref <= xmax - 1
 
   t1 <- par.mde[1]
   t2 <- par.mde[2]
@@ -1301,69 +1309,80 @@ DrawMDE <- function(par.mde, d15N, age,
   ref.bones <- CalcRefBone(age.ref, residue, subtract,
     inted.wnfood.ref, enrich, female.mean, n.wnfood, turnover.ref)
 
-  # Draw the figure.
-  Age <- c(0, xmax)
-  delta_15N <- c(min(d15N) - 1, max(d15N) + 1)
-  plot(Age, delta_15N, type = "n", ...)
+  if(!plot){
+    model.age2 <- model.age
+    model.age2[length(model.age)] <- 10
+    tor.var <- list(
+      age.diet = model.age2,
+      d15N.diet = model.diets,
+      age.bone = age.ref,
+      d15N.bone = ref.bones)
+    return(tor.var)
+  }else{
+    # Draw the figure.
+    Age <- c(0, xmax)
+    delta_15N <- c(min(d15N) - 1, max(d15N) + 1)
+    plot(Age, delta_15N, type = "n", ...)
 
-  # Subadults.
-	points(age, d15N, pch = 23, cex = cex)
+    # Subadults.
+	  points(age, d15N, pch = 23, cex = cex)
 
-	# Measured d15N mean and SD of females.
-  female.mean <- ifelse(is.female, female.mean, NA)
-  female.sd <- ifelse(is.female, female.sd, NA)
+	  # Measured d15N mean and SD of females.
+    female.mean <- ifelse(is.female, female.mean, NA)
+    female.sd <- ifelse(is.female, female.sd, NA)
 
-  female.age <- xmax - 0.4
-	arrows(female.age, (female.mean + female.sd),
-    female.age, (female.mean - female.sd),
-    angle = 90, length = 0.025, code = 3)
-	points(female.age, female.mean, pch = 19, col = "white", cex = cex)
-	points(female.age, female.mean, pch = 21, cex = cex)
+    female.age <- xmax - 0.4
+	  arrows(female.age, (female.mean + female.sd),
+      female.age, (female.mean - female.sd),
+      angle = 90, length = 0.025, code = 3)
+	  points(female.age, female.mean, pch = 19, col = "white", cex = cex)
+	  points(female.age, female.mean, pch = 21, cex = cex)
   
-	# Measured d15N mean and SD of adults.
-  adult.age <- xmax
-	arrows(adult.age, (adult.mean + adult.sd),
-    adult.age, (adult.mean - adult.sd),
-    angle = 90, length = 0.025, code = 3)
-	points(adult.age, adult.mean, pch = 4, cex = cex)
+	  # Measured d15N mean and SD of adults.
+    adult.age <- xmax
+	  arrows(adult.age, (adult.mean + adult.sd),
+      adult.age, (adult.mean - adult.sd),
+      angle = 90, length = 0.025, code = 3)
+	  points(adult.age, adult.mean, pch = 4, cex = cex)
 
-  # Horizontal line of adults.
-  if(hline.adult){
-    lines(c(-10, 100), rep(adult.mean + adult.sd, 2),
-      type = "l", lty = "dotted", lwd = 0.5)
-    lines(c(-10, 100), rep(adult.mean - adult.sd, 2),
-      type = "l", lty = "dotted", lwd = 0.5)
-  }
-  if(hline.female){
-    lines(c(-10, 100), rep(female.mean + female.sd, 2),
-      type = "l", lty = "dotted", lwd = 0.5)
-    lines(c(-10, 100), rep(female.mean - female.sd, 2),
-      type = "l", lty = "dotted", lwd = 0.5)
-  }
-
-	# Optimized d15N of diet.
-	points(model.age, model.diets, type = "l", cex = cex)
-
-	# Optimized d15N of bone.
-	points(age.ref, ref.bones, pch = 18, cex = cex)
-
-  # Legend.
-  if(is.legend){
-    pch.l <- c(23, 18, NA, 4, 21)
-    lty.l <- c(NA, NA, "solid", NA, NA)
-    legend.l <- c("Measured d15N", "Modeled d15N", "Modeled diet",
-      "Total adult", "Adult female")
-    ind.l <- 1:5
-    if(is.na(adult.mean)){
-      ind.l <- ind.l[-(which(ind.l == 4))]
+    # Horizontal line of adults.
+    if(hline.adult){
+      lines(c(-10, 100), rep(adult.mean + adult.sd, 2),
+        type = "l", lty = "dotted", lwd = 0.5)
+      lines(c(-10, 100), rep(adult.mean - adult.sd, 2),
+        type = "l", lty = "dotted", lwd = 0.5)
     }
-    if(is.na(female.mean)){
-      ind.l <- ind.l[-(which(ind.l == 5))]
+    if(hline.female){
+      lines(c(-10, 100), rep(female.mean + female.sd, 2),
+        type = "l", lty = "dotted", lwd = 0.5)
+      lines(c(-10, 100), rep(female.mean - female.sd, 2),
+        type = "l", lty = "dotted", lwd = 0.5)
     }
+  
+	  # Optimized d15N of diet.
+	  points(model.age, model.diets, type = "l", cex = cex)
 
-    legend(xmax, delta_15N[2], legend = legend.l[ind.l],
-    pch = pch.l[ind.l], lty = lty.l[ind.l], cex = 0.7,
-    xjust = 1, yjust = 1)
+	  # Optimized d15N of bone.
+	  points(age.ref[is.ref], ref.bones[is.ref], pch = 18, cex = cex)
+
+    # Legend.
+    if(is.legend){
+      pch.l <- c(23, 18, NA, 4, 21)
+      lty.l <- c(NA, NA, "solid", NA, NA)
+      legend.l <- c("Measured d15N", "Modeled d15N", "Modeled diet",
+        "Total adult", "Adult female")
+      ind.l <- 1:5
+      if(is.na(adult.mean)){
+        ind.l <- ind.l[-(which(ind.l == 4))]
+      }
+      if(is.na(female.mean)){
+        ind.l <- ind.l[-(which(ind.l == 5))]
+      }
+
+      legend(xmax, delta_15N[2], legend = legend.l[ind.l],
+      pch = pch.l[ind.l], lty = lty.l[ind.l], cex = 0.7,
+      xjust = 1, yjust = 1)
+    }
   }
 }
 

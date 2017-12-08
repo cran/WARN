@@ -1,5 +1,9 @@
 News for Package 'WARN'
 
+# Changes in version 1.2-3 (2017-12-08)
+## New feature
+- Added 'plot = FALSE' option in 'warn.plot'
+
 # Changes in version 1.2-2 (2017-02-22)
 ## Bug fix
 - Fixed bug in 'warnCI' function

@@ -72,7 +72,8 @@ print.warn <- function(x, ...){
 plot.warn <- function(x, 
   hline.female = TRUE, hline.adult = FALSE, 
   adult.mean = NA, adult.sd = 0,
-  is.legend = TRUE, is.female = TRUE, ...){
+  is.legend = TRUE, is.female = TRUE,
+  plot = TRUE, ...){
 # Plot method for S3 "warn" class.
 #
 # arg:
@@ -96,7 +97,8 @@ plot.warn <- function(x,
     adult.mean = adult.mean,
     adult.sd = adult.sd,
     is.legend = is.legend,
-    is.female = is.female, ...)
+    is.female = is.female,
+    plot = plot, ...)
 }
 
 summary.warn <- function(object, ...){
