@@ -9,6 +9,8 @@
 # 2016-06-23: Tsutaya T: Fixed bug (>2 values in result of which()) in CalcProb1D and CalcProb2D.
 # 2017-02-16: Tsutaya T: Fixed possible endless calculation in CalcProb1D and CalcProb2D.
 # 2017-11-26: Tsutaya T: Added "modeled d15N" and "modeled diet" in returned values of warn.
+# 2019-10-07: Tsutaya T: Added mineral turnover rate.
+# 2019-10-17: Tsutaya T: Modified prior argument for the possible change in the prior distribution of epsilon.
 # ==============================
 # OBJECTIVE ==========
 # This program performs Apporoximate Bayesian Computation with SMC
@@ -98,7 +100,19 @@ SetColTurnover <- function(x){
     2.756e-03 * x^3 + 5.325e-05 * x^4)
 }
 
-ArrangeColTurnover <- function(age, subtract){
+## Calculate mineral turnover rates.
+SetMinTurnover <- function(x){
+# Set turnover rate of bone collagen at given age.
+#  This function is only applicable for nonadults under 20 years of age.
+#  Turnover rate is represented as that of 1 year from t - 1.0 to t year.
+#
+# args:
+#  x: An age at which we want to calculate the rate
+  return(1.433e+00 - 2.966e-01 * x + 3.531e-02 * x^2 - 
+    1.936e-03 * x^3 + 3.749e-05 * x^4)
+}
+
+ArrangeColMinTurnover <- function(age, subtract, fraction = "collagen"){
 # Calculate and arrange "collagen" turnover rate (modeling + remodeling).
 #  If turnover rate is larger than 1, it must be 1.
 #  If an objective individual is 0 years old, turnover rate of it must be 1.
@@ -108,24 +122,38 @@ ArrangeColTurnover <- function(age, subtract){
 #  age: A vector of reference or observed ages
 #   with which we want to calculate the turnover rates.
 #  subtract: A vector of their subtracts (unit time is <= 1.0 year).
+#  fraction: An character of target fraction of turnover.
 #
 # returns:
-#  A vector of combined bone "collagen" turnover rate 
+#  A vector of combined bone "collagen" or "mineral" turnover rate 
 #   (modeling: "growth" + remodeling: "turnover") 
 #   for the given age dataframe used in further computation.
 #  Calculated reference turnover[1] corresponds to ages between 0 to 0 years,
 #   reference turnover[2] corresponds to ages between 0 to 1.0 years, and so on.
   age.ceil <- ceiling(age)
-  int.all <-  mapply(function(a, b){ # from a to b
-    return(integrate(SetColTurnover, a, b)$value)
-  },
-  a = subtract, b = age.ceil)
-  int.age <-  mapply(function(a, b){ # from a to b
-    return(integrate(SetColTurnover, a, b)$value)
-  },
-  a = subtract, b = age)
+  if(fraction == "collagen"){
+    int.all <-  mapply(function(a, b){ # from a to b
+      return(integrate(SetColTurnover, a, b)$value)
+    },
+    a = subtract, b = age.ceil)
+    int.age <-  mapply(function(a, b){ # from a to b
+      return(integrate(SetColTurnover, a, b)$value)
+    },
+    a = subtract, b = age)
 
-  turnover <- SetColTurnover(age.ceil) * int.age / int.all
+    turnover <- SetColTurnover(age.ceil) * int.age / int.all
+  }else if(fraction == "mineral"){
+    int.all <-  mapply(function(a, b){ # from a to b
+      return(integrate(SetMinTurnover, a, b)$value)
+    },
+    a = subtract, b = age.ceil)
+    int.age <-  mapply(function(a, b){ # from a to b
+      return(integrate(SetMinTurnover, a, b)$value)
+    },
+    a = subtract, b = age)
+
+    turnover <- SetMinTurnover(age.ceil) * int.age / int.all
+  }
 
   turnover <- ifelse(turnover >= 1, 1, turnover)
   turnover <- ifelse(age == 0, 1, turnover)
@@ -360,7 +388,7 @@ OptimizePar <- function(par.initial, age.ref, residue.ref, subtract.ref,
 #  List of optimized parameters and other results.
 #
 # functions:
-#  CalcDistanceForOptime
+#  CalcDistanceForOptim
 #  ConditionAge
 	# optimize (minimize) the parameters
 	par.optimized <- optim(par = par.initial, 
@@ -391,6 +419,7 @@ OptimizePar <- function(par.initial, age.ref, residue.ref, subtract.ref,
 }
 
 WrapperOptim <- function(age, d15N, female.mean,
+  fraction = "collagen",
   par.initial = c(0.5, 3, 1.9, female.mean), 
   form = "parabolic", ...){
 # Wrapper function for optimization of the weaning parameters.
@@ -399,6 +428,7 @@ WrapperOptim <- function(age, d15N, female.mean,
 #  age: A vector of observed ages for the subadults.
 #  d15N: A vector of observed d15N values for the subadults.
 #  female.mean: Female mean and SD d15N values.
+#  fraction: An character of target fraction of turnover.
 #  par: Initial values for parameters to be optimized over.
 #  form: The form of change in d15N values during weaning.
 #  ...: Additional arguments passed to optim().
@@ -409,7 +439,7 @@ WrapperOptim <- function(age, d15N, female.mean,
 # functions:
 #  CalcDistanceForOptim
 #  SubtractAgeResidue
-#  ArrangeTurnoverRate
+#  ArrangeColMinTurnover
   # Arrange ages.
   age.ref = seq(0, 10, 1.0)
 
@@ -425,8 +455,8 @@ WrapperOptim <- function(age, d15N, female.mean,
   subtract.obs <- age.observed[ , 3]
 
   # Arrange turnover rate.
-  turnover.ref <- ArrangeColTurnover(age.ref, subtract.ref)
-  turnover.obs <- ArrangeColTurnover(age.obs, subtract.obs)
+  turnover.ref <- ArrangeColMinTurnover(age.ref, subtract.ref, fraction)
+  turnover.obs <- ArrangeColMinTurnover(age.obs, subtract.obs, fraction)
 
 	# Optimize (minimize) the parameters.
 	par.optimized <- optim(par = par.initial, 
@@ -529,7 +559,8 @@ CalcDistance <- function(age.ref, residue.ref, subtract.ref,
 }
 
 CalcDistanceMDE <- function(age.ref = seq(0, 10, 1.0), par.mde,
-  age.obs, d15N, female.mean, form = "parabolic"){
+  age.obs, d15N, female.mean,
+  fraction = "collagen", form = "parabolic"){
 # Calcurate variation (scatterness) under the MLE framework
 #  for a given observed dataset and MDE parameters.
 #
@@ -541,6 +572,7 @@ CalcDistanceMDE <- function(age.ref = seq(0, 10, 1.0), par.mde,
 #   with which we want to calculate the posterior.
 #  d15N: A vector of observed d15N values for the nonadults.
 #  female.mean: Mean d15N value of adult females.
+#  fraction: An character of target fraction of turnover.
 #  form: The form of change in d15N values during weaning.
 #
 # returns:
@@ -548,7 +580,7 @@ CalcDistanceMDE <- function(age.ref = seq(0, 10, 1.0), par.mde,
 #   
 # functions:
 #  SubtractAgeResidue
-#  ArrangeColTurnover
+#  ArrangeColMinTurnover
 #  OptimizePar
 #  CalcDistance
   age.reference <- SubtractAgeResidue(age.ref)
@@ -562,8 +594,8 @@ CalcDistanceMDE <- function(age.ref = seq(0, 10, 1.0), par.mde,
   residue.obs <- age.observed[ , 2]
   subtract.obs <- age.observed[ , 3]
 
-  turnover.ref <- ArrangeColTurnover(age.ref, subtract.ref)
-  turnover.obs <- ArrangeColTurnover(age.obs, subtract.obs)
+  turnover.ref <- ArrangeColMinTurnover(age.ref, subtract.ref, fraction)
+  turnover.obs <- ArrangeColMinTurnover(age.obs, subtract.obs, fraction)
 
   square.opt <- CalcDistance(age.ref = age.ref,
     residue.ref = residue.ref,
@@ -610,7 +642,8 @@ CalcTransition <- function(from, to){
   dnorm(to - from, 0, 0.10)
 }
 
-PerformABCPRC <- function(threshold, tolerances, num.particle, mu.t1, sigma.t1,
+PerformABCPRC <- function(threshold,
+  tolerances, num.particle, mu.t1, sigma.t1,
   mu.t2, sigma.t2, mu.enrich, sigma.enrich, mu.wnfood, sigma.wnfood,
   mu.epsilon, sigma.epsilon, age.ref, residue.ref, subtract.ref,
   age.obs, residue.obs, subtract.obs, female.mean,
@@ -881,7 +914,8 @@ WrapperDensity <- function(result.d, is.2d = FALSE){
 }
 
 WrapperABCPRC <- function(age.ref = seq(0, 10, 1.0), prior,
-  age.obs, d15N, female.mean, num.particle = 10000, form = "parabolic",
+  age.obs, d15N, female.mean, fraction = "collagen",
+  num.particle = 10000, form = "parabolic",
   tolerances = c(2.0, 1.0, 0.5, 0.25, 0.125, 0.0625, 0)){
 # Set threshold (optimized value) and perform ABC-PRC
 #  for a given observed dataset and prior distributions.
@@ -901,6 +935,7 @@ WrapperABCPRC <- function(age.ref = seq(0, 10, 1.0), prior,
 #   with which we want to calculate the posterior.
 #  d15N: A vector of observed d15N values for the nonadults.
 #  female.mean: Mean d15N value of adult females.
+#  fraction: An character of target fraction of turnover.
 #  num.particle: The number of extracted parameters included in one particle.
 #  form: The form of change in d15N values during weaning.
 #
@@ -909,7 +944,7 @@ WrapperABCPRC <- function(age.ref = seq(0, 10, 1.0), prior,
 #   
 # functions:
 #  SubtractAgeResidue
-#  ArrangeTurnoverRate
+#  ArrangeColMinTurnover
 #  OptimizePar
 #  PerformABCPRC
   age.reference <- SubtractAgeResidue(age.ref)
@@ -923,8 +958,8 @@ WrapperABCPRC <- function(age.ref = seq(0, 10, 1.0), prior,
   residue.obs <- age.observed[ , 2]
   subtract.obs <- age.observed[ , 3]
 
-  turnover.ref <- ArrangeColTurnover(age.ref, subtract.ref)
-  turnover.obs <- ArrangeColTurnover(age.obs, subtract.obs)
+  turnover.ref <- ArrangeColMinTurnover(age.ref, subtract.ref, fraction)
+  turnover.obs <- ArrangeColMinTurnover(age.obs, subtract.obs, fraction)
 
   par.initial <- c(prior[c(1, 3, 5, 7)])
   par.opt <- OptimizePar(par.initial = par.initial,
@@ -942,23 +977,39 @@ WrapperABCPRC <- function(age.ref = seq(0, 10, 1.0), prior,
     form = form)
 
   threshold <- par.opt$value
-#  tolerances <- tolerances 
 
-  prc <- PerformABCPRC(threshold, tolerances, num.particle,
-    prior[1], prior[2], prior[3], prior[4],
-    prior[5], prior[6], prior[7], prior[8], 0, 1,
-    age.ref = age.ref, residue.ref = residue.ref,
+  prc <- PerformABCPRC(
+    threshold = threshold,
+    tolerances = tolerances,
+    num.particle = num.particle,
+    mu.t1 = prior[1],
+    sigma.t1 = prior[2],
+    mu.t2 = prior[3],
+    sigma.t2 = prior[4],
+    mu.enrich = prior[5],
+    sigma.enrich = prior[6],
+    mu.wnfood = prior[7],
+    sigma.wnfood = prior[8],
+    mu.epsilon = prior[9],
+    sigma.epsilon = prior[10],
+    age.ref = age.ref,
+    residue.ref = residue.ref,
     subtract.ref = subtract.ref,
-    age.obs = age.obs, residue.obs = residue.obs,
-    subtract.obs = subtract.obs, female.mean = female.mean,
+    age.obs = age.obs,
+    residue.obs = residue.obs,
+    subtract.obs = subtract.obs,
+    female.mean = female.mean,
     turnover.ref = turnover.ref,
-    turnover.obs, d15N = d15N, form = form)
+    turnover.obs,
+    d15N = d15N,
+    form = form)
 
   return(prc)
 }
 
 WARN <- function(age, d15N, female.mean, female.sd = NA,
-  prior = c(0.5, 3, 3, 3, 1.9, 0.9, female.mean, 3), 
+  fraction = "collagen",
+  prior = c(0.5, 3, 3, 3, 1.9, 0.9, female.mean, 3, 0, 1),
   num.particle = 10000, form = "parabolic",
   tolerances = c(2.0, 1.0, 0.5, 0.25, 0.125, 0.0625, 0)){
 # Wrapper function for weaning ages reconstruction using ABC-SMC-PRC.
@@ -968,6 +1019,7 @@ WARN <- function(age, d15N, female.mean, female.sd = NA,
 #  age: A vector of observed ages for the subadults.
 #  d15N: A vector of observed d15N values for the subadults.
 #  female.mean, female.sd: Female mean and SD d15N values.
+#  fraction: An character of target fraction of turnover.
 #  prior: Hyper parameters in the order of c(mu.t1, sigma.t1,
 #   mu.t2, sigma.t2, mu.enrich, sigma.enrich, mu.wnfood, sigma.wnfood,
 #   mu.epsilon, sigma.epsilon).
@@ -976,6 +1028,7 @@ WARN <- function(age, d15N, female.mean, female.sd = NA,
 #   t2: Age at the completion of weaning.
 #   enrich: Enrichment factor between mother and infant.
 #   wnfood: d15N value of weaning food.
+#   epsilon: Hyper parameter of 1SD for the individual epsilon.
 #  num.particle: The number of extracted parameters included in one particle.
 #  form: The form of change in d15N values during weaning.
 #
@@ -989,9 +1042,9 @@ WARN <- function(age, d15N, female.mean, female.sd = NA,
 #  WrapperDensity
 #  CalcDistanceMDE
   # ABC-PRC.
-  prior <- c(prior, c(0, 1)) # Prior parameters for epsilon.
   posterior <- WrapperABCPRC(age.ref = seq(0, 10, 1.0), prior = prior,
     age.obs = age, d15N = d15N, female.mean = female.mean,
+    fraction = fraction,
     num.particle = num.particle, form = form,
     tolerances = tolerances)$theta
 
@@ -1023,6 +1076,7 @@ WARN <- function(age, d15N, female.mean, female.sd = NA,
     age.obs = age,
     d15N = d15N,
     female.mean = female.mean,
+    fraction = fraction,
     form = form)
 
   return(list(mde = estimator,
@@ -1036,6 +1090,7 @@ WARN <- function(age, d15N, female.mean, female.sd = NA,
     d15N = d15N,
     female.mean = female.mean,
     female.sd = female.sd,
+    fraction = fraction,
     prior = prior,
     particle = num.particle,
     form = form))
@@ -1241,13 +1296,13 @@ DrawProb2D <- function(kde, range.x1 = NA, range.y1 = NA, mde = c(NA, NA),
 
 DrawMDE <- function(par.mde, d15N, age,
   female.mean = NA, female.sd = 0,
+  fraction = "collagen",
   form = "parabolic",
   hline.female = TRUE,
   hline.adult = FALSE,
   adult.mean = NA, adult.sd = 0, 
   is.legend = TRUE,
   is.female = TRUE,
-  plot = TRUE,
   cex = 1, ...){
 # Draw the KDE-MDE results.
 #
@@ -1257,34 +1312,29 @@ DrawMDE <- function(par.mde, d15N, age,
 #  age: A vector of observed ages for the subadults.
 #  female.mean: Female mean d15N values.
 #  female.sd: SD of female d15N values.
+#  fraction: An character of target fraction of turnover.
 #  form: The form of change in d15N values during weaning.
 #  hline: If true 1SD ranges are indicated by horizontal line.
 #  adult.mean: Adult mean d15N values.
 #  adult.sd: SD of adult d15N values.
 #  is.legend: If TRUE, a legend is drawn.
 #  is.female: If FALSE, female mean is not drawn.
-#  plot: logical. If TRUE (default), a figure is plotted, otherwise a list of d15N changes in modeled bone and modeled diet is returned.
 #  ...: Arguments passed to plot().
 #
 # returns:
 #  A figure of the KDE-MDE result.
 #
 # function:
-#  ArrangeColTurnover
+#  ArrangeColMinTurnover
 #  CalcNonmilkProp
 #  IntNonmilkProp
 #  CalcRefBone
-
-  #  xmax <- ceiling(max(age) * 2) / 2 + 1
-  #  age.reference <- SubtractAgeResidue(seq(0, xmax - 1, 0.5))
-
   xmax <- ceiling(max(age) * 2) / 2 + 1
-  age.reference <- SubtractAgeResidue(seq(0, 10, 0.5))
+  age.reference <- SubtractAgeResidue(seq(0, xmax - 1, 0.5))
   age.ref <- age.reference[ , 1]
   residue <- age.reference[ , 2]
   subtract <- age.reference[ , 3]
-  turnover.ref <- ArrangeColTurnover(age.ref, subtract)
-  is.ref <- age.ref <= xmax - 1
+  turnover.ref <- ArrangeColMinTurnover(age.ref, subtract, fraction)
 
   t1 <- par.mde[1]
   t2 <- par.mde[2]
@@ -1309,80 +1359,69 @@ DrawMDE <- function(par.mde, d15N, age,
   ref.bones <- CalcRefBone(age.ref, residue, subtract,
     inted.wnfood.ref, enrich, female.mean, n.wnfood, turnover.ref)
 
-  if(!plot){
-    model.age2 <- model.age
-    model.age2[length(model.age)] <- 10
-    tor.var <- list(
-      age.diet = model.age2,
-      d15N.diet = model.diets,
-      age.bone = age.ref,
-      d15N.bone = ref.bones)
-    return(tor.var)
-  }else{
-    # Draw the figure.
-    Age <- c(0, xmax)
-    delta_15N <- c(min(d15N) - 1, max(d15N) + 1)
-    plot(Age, delta_15N, type = "n", ...)
+  # Draw the figure.
+  Age <- c(0, xmax)
+  Value <- c(min(d15N) - 1, max(d15N) + 1)
+  plot(Age, Value, type = "n", ...)
 
-    # Subadults.
-	  points(age, d15N, pch = 23, cex = cex)
+  # Subadults.
+	points(age, d15N, pch = 23, cex = cex)
 
-	  # Measured d15N mean and SD of females.
-    female.mean <- ifelse(is.female, female.mean, NA)
-    female.sd <- ifelse(is.female, female.sd, NA)
+	# Measured d15N mean and SD of females.
+  female.mean <- ifelse(is.female, female.mean, NA)
+  female.sd <- ifelse(is.female, female.sd, NA)
 
-    female.age <- xmax - 0.4
-	  arrows(female.age, (female.mean + female.sd),
-      female.age, (female.mean - female.sd),
-      angle = 90, length = 0.025, code = 3)
-	  points(female.age, female.mean, pch = 19, col = "white", cex = cex)
-	  points(female.age, female.mean, pch = 21, cex = cex)
+  female.age <- xmax - 0.4
+	arrows(female.age, (female.mean + female.sd),
+    female.age, (female.mean - female.sd),
+    angle = 90, length = 0.025, code = 3)
+	points(female.age, female.mean, pch = 19, col = "white", cex = cex)
+	points(female.age, female.mean, pch = 21, cex = cex)
   
-	  # Measured d15N mean and SD of adults.
-    adult.age <- xmax
-	  arrows(adult.age, (adult.mean + adult.sd),
-      adult.age, (adult.mean - adult.sd),
-      angle = 90, length = 0.025, code = 3)
-	  points(adult.age, adult.mean, pch = 4, cex = cex)
+	# Measured d15N mean and SD of adults.
+  adult.age <- xmax
+	arrows(adult.age, (adult.mean + adult.sd),
+    adult.age, (adult.mean - adult.sd),
+    angle = 90, length = 0.025, code = 3)
+	points(adult.age, adult.mean, pch = 4, cex = cex)
 
-    # Horizontal line of adults.
-    if(hline.adult){
-      lines(c(-10, 100), rep(adult.mean + adult.sd, 2),
-        type = "l", lty = "dotted", lwd = 0.5)
-      lines(c(-10, 100), rep(adult.mean - adult.sd, 2),
-        type = "l", lty = "dotted", lwd = 0.5)
+  # Horizontal line of adults.
+  if(hline.adult){
+    lines(c(-10, 100), rep(adult.mean + adult.sd, 2),
+      type = "l", lty = "dotted", lwd = 0.5)
+    lines(c(-10, 100), rep(adult.mean - adult.sd, 2),
+      type = "l", lty = "dotted", lwd = 0.5)
+  }
+  if(hline.female){
+    lines(c(-10, 100), rep(female.mean + female.sd, 2),
+      type = "l", lty = "dotted", lwd = 0.5)
+    lines(c(-10, 100), rep(female.mean - female.sd, 2),
+      type = "l", lty = "dotted", lwd = 0.5)
+  }
+
+	# Optimized d15N of diet.
+	points(model.age, model.diets, type = "l", cex = cex)
+
+	# Optimized d15N of bone.
+	points(age.ref, ref.bones, pch = 18, cex = cex)
+
+  # Legend.
+  if(is.legend){
+    pch.l <- c(23, 18, NA, 4, 21)
+    lty.l <- c(NA, NA, "solid", NA, NA)
+    legend.l <- c("Measured value", "Modeled value", "Modeled diet",
+      "Total adult", "Adult female")
+    ind.l <- 1:5
+    if(is.na(adult.mean)){
+      ind.l <- ind.l[-(which(ind.l == 4))]
     }
-    if(hline.female){
-      lines(c(-10, 100), rep(female.mean + female.sd, 2),
-        type = "l", lty = "dotted", lwd = 0.5)
-      lines(c(-10, 100), rep(female.mean - female.sd, 2),
-        type = "l", lty = "dotted", lwd = 0.5)
+    if(is.na(female.mean)){
+      ind.l <- ind.l[-(which(ind.l == 5))]
     }
-  
-	  # Optimized d15N of diet.
-	  points(model.age, model.diets, type = "l", cex = cex)
 
-	  # Optimized d15N of bone.
-	  points(age.ref[is.ref], ref.bones[is.ref], pch = 18, cex = cex)
-
-    # Legend.
-    if(is.legend){
-      pch.l <- c(23, 18, NA, 4, 21)
-      lty.l <- c(NA, NA, "solid", NA, NA)
-      legend.l <- c("Measured d15N", "Modeled d15N", "Modeled diet",
-        "Total adult", "Adult female")
-      ind.l <- 1:5
-      if(is.na(adult.mean)){
-        ind.l <- ind.l[-(which(ind.l == 4))]
-      }
-      if(is.na(female.mean)){
-        ind.l <- ind.l[-(which(ind.l == 5))]
-      }
-
-      legend(xmax, delta_15N[2], legend = legend.l[ind.l],
-      pch = pch.l[ind.l], lty = lty.l[ind.l], cex = 0.7,
-      xjust = 1, yjust = 1)
-    }
+    legend(xmax, Value[2], legend = legend.l[ind.l],
+    pch = pch.l[ind.l], lty = lty.l[ind.l], cex = 0.7,
+    xjust = 1, yjust = 1)
   }
 }
 

@@ -5,6 +5,8 @@
 #  integrated names of variable.
 # https://sites.google.com/site/leihcrev/r/writing-your-own-functions
 # 2014-11-03: Tsutaya T: added stop() message for 'age' > 10.
+# 2019-10-07: Tsutaya T: Added mineral turnover rate.
+# 2019-10-17: Tsutaya T: Added NA omit for age and d15N.
 # ==============================
 # OBJECTIVE ----------
 # This program performs Apporoximate Bayesian Computation with SMC
@@ -17,13 +19,14 @@
 # Define the class "warn".
 # ==============================
 warn <- function(age, d15N, female.mean, female.sd,
-  prior, num.particle, form, tolerances){
+  fraction, prior, num.particle, form, tolerances){
 # S3 method.
   UseMethod("warn")
 }
 
 warn.default <- function(age, d15N, female.mean, female.sd = NA,
-  prior = c(0.5, 3, 3, 3, 1.9, 0.9, female.mean, 3),
+  fraction = "collagen",
+  prior = c(0.5, 3, 3, 3, 1.9, 0.9, female.mean, 3, 0, 1),
   num.particle = 10000, form = "parabolic",
   tolerances = c(2.0, 1.0, 0.5, 0.25, 0.125, 0.0625, 0)){
 # Default method for S3 "warn" class (= WARN()).
@@ -33,14 +36,21 @@ warn.default <- function(age, d15N, female.mean, female.sd = NA,
 #
 # return:
 #  Class "warn" object.
+  # Remove NA.
+  no.NA <- !is.na(age) & !is.na(d15N)
+  age.naomit <- age[no.NA]
+  d15N.naomit <- d15N[no.NA]
+  
+  # Stop, if age > 10.
   if(max(age) > 10){
     stop(message=">10 years of 'age'")
   }
 
-  warn.result <- WARN(age = age,
-    d15N = d15N,
+  warn.result <- WARN(age = age.naomit,
+    d15N = d15N.naomit,
     female.mean = female.mean,
     female.sd = female.sd,
+    fraction = fraction,
     prior = prior,
     num.particle = num.particle,
     form = form,
@@ -91,14 +101,14 @@ plot.warn <- function(x,
     age = x$age,
     female.mean = x$female.mean,
     female.sd = x$female.sd,
+    fraction = x$fraction,
     form = x$form,
     hline.female = hline.female,
     hline.adult = hline.adult, 
     adult.mean = adult.mean,
     adult.sd = adult.sd,
     is.legend = is.legend,
-    is.female = is.female,
-    plot = plot, ...)
+    is.female = is.female, ...)
 }
 
 summary.warn <- function(object, ...){
@@ -336,6 +346,7 @@ warnOptim <- function(age, ...){
 }
 
 warnOptim.default <- function(age, d15N, female.mean,
+  fraction = "collagen",
   par.initial = c(0.5, 3, 1.9, female.mean),
   form = "parabolic", ...){
 # Default method for S3 "warnOptim" class (= WrapperOptim).
@@ -348,6 +359,7 @@ warnOptim.default <- function(age, d15N, female.mean,
   warnoptim.result <- WrapperOptim(age = age,
     d15N = d15N,
     female.mean = female.mean,
+    fraction = fraction,
     par.initial = par.initial,
     form = form, ...)
   warnoptim.result$call <- match.call()

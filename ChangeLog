@@ -1,9 +1,9 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [1.2-4] - 2019-10-18
 ### Added
-- 'turnover = c("collagen", "mineral")' argument @warn
+- 'fraction = c("collagen", "mineral")' argument in warn
 
 ## [1.2-3] - 2017-12-08
 ### Added

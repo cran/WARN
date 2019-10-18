@@ -9,22 +9,24 @@
 }
 \usage{
 \method{warn}{default}(age, d15N, female.mean, female.sd = NA,
-  prior = c(0.5, 3, 3, 3, 1.9, 0.9, female.mean, 3),
+  fraction = "collagen",
+  prior = c(0.5, 3, 3, 3, 1.9, 0.9, female.mean, 3, 0, 1),
   num.particle = 10000, form = "parabolic",
   tolerances = c(2.0, 1.0, 0.5, 0.25, 0.125, 0.0625, 0))
 }
 \arguments{
   \item{age}{a vector of estimated ages in year of the non-adult skeletons. Ages greater than 10 years are not allowed.}
-  \item{d15N}{a vector of bone collagen d15N of non-adult skeletons.}
-  \item{prior}{a vector of hyper parameter values for prior distributions of the weaning parameters. Mean and SD for t1 (age at the start of weaning), t2 (age at the end of weaning), enrichment of d15N, and d15N of weaning food derived collagen, in sequence. The values are succeeded to \code{mean} and \code{sd} arguments of \code{\link{rnorm}}. The default is \code{c(0.5, 3, 3, 3, 1.9, 0.9, female.mean, 3)}.}
+  \item{d15N}{a vector of bone collagen d15N of non-adult skeletons. Other geochemical values (e.g., d18O, Sr/Ca, and Ba/Ca) can be used with this argument.}
   \item{female.mean}{the mean d15N of the adult females, single value.}
   \item{female.sd}{the one standard deviation of adult female d15Ns, an optional single value. Utilized later in \code{\link{plot.warn}}.}
+  \item{fraction}{fraction of bone analyzed. The allowed values are \code{collagen} and \code{mineral}. The turnover rate specific to each fraction will be used.}
+  \item{prior}{a vector of hyper parameter values for prior distributions of the weaning parameters and the individual error term. Mean and SD for t1 (age at the start of weaning), t2 (age at the end of weaning), enrichment of d15N, d15N of weaning food derived collagen, and sigma used in ABC-SMC, in sequence. The values are succeeded to \code{mean} and \code{sd} arguments of \code{\link{rnorm}}. The default is \code{c(0.5, 3, 3, 3, 1.9, 0.9, female.mean, 3, 0, 1)}.}
   \item{num.particle}{number of particles in sequential Monte Carlo (SMC) sampling; defaults to 10000.}
   \item{form}{form of the model curve for the weaning process. The allowed values are \code{"linear"}, \code{"parabolic"} (the default), \code{"reverse"}, and \code{"sigmoid"}.}
   \item{tolerances}{a vector of decreasing torelances used in the SMC sampling. The default is \code{c(2.0, 1.0, 0.5, 0.25, 0.125, 0.0625, 0)}.}
 }
 \details{
-  The \code{warn} esimates the age at the start and end of weaning, enrichment of d15N through maternal to infant tissue, and d15N value of collagen synthesized entirely from weaning foods with their posterior probabilities. Probabilities are estimated by SMC with partial rejection control, and the algorithm was derived from Sisson et al. (2007, 2009). The posterior probabilities are obtained as a result of kernel density estimation, a product of \code{\link{kde2d}} in \pkg{MASS} package for weaning ages, and \code{\link{density}} for enrichment and weaning foods. The model used to describe the change in d15N during weaning contains a new estimate of bone collagen turnover rates in non-adults, and is shown in Tsutaya and Yoneda (2013).
+  The \code{warn} esimates the age at the start and end of weaning, enrichment of d15N through maternal to infant tissue, and d15N value of collagen synthesized entirely from weaning foods with their posterior probabilities. Other geochemical values that change with breastfeeding and weaning can also be analyzed (e.g., d18O, Sr/Ca, and Ba/Ca). Probabilities are estimated by SMC with partial rejection control, and the algorithm was derived from Sisson et al. (2007, 2009). The posterior probabilities are obtained as a result of kernel density estimation, a product of \code{\link{kde2d}} in \pkg{MASS} package for weaning ages, and \code{\link{density}} for enrichment and weaning foods. The model used to describe the change in d15N during weaning contains a new estimate of bone collagen turnover rates in non-adults, and is shown in Tsutaya and Yoneda (2013).
 }
 \value{
   \code{warn} returns an object of \code{\link{class}} \code{"warn"}.\cr
@@ -41,6 +43,7 @@
   \item{d15N}{the measuerd d15Ns of non-adult bone collagen used.}
   \item{female.mean}{the mean d15N of adult females used.}
   \item{female.sd}{the one standard deviation of adult female d15Ns used.}
+  \item{fraction}{the fraction of bone analyzed.}
   \item{prior}{a vector of the hyper parameter values for the prior distributions used.}
   \item{particle}{the number of particles used.}
   \item{form}{the form of the model curve used.}
@@ -71,7 +74,7 @@ warn.lerna <- warn(
   female.mean = mean(female$d15N),
   num.particle = 500,
   female.sd = sd(female$d15N),
-  prior = c(0.2, 0.5, 1.6, 0.5, 2.5, 0.5, 8.1, 0.5),
+  prior = c(0.2, 0.2, 1.6, 0.2, 2.5, 0.2, 8.1, 0.2, 0, 0.7),
   tolerances = c(1.5, 0.7))
 
 ## Indicate summary.
@@ -88,3 +91,4 @@ plot(warn.lerna,
   is.female = FALSE)
 }
 \keyword{math}
+

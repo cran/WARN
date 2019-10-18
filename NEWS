@@ -1,5 +1,9 @@
 News for Package 'WARN'
 
+# Changes in version 1.2-4 (2019-10-18)
+## New feature
+- Enabled calculation for mineral fraction
+
 # Changes in version 1.2-3 (2017-12-08)
 ## New feature
 - Added 'plot = FALSE' option in 'warn.plot'

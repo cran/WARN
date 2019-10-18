@@ -48,7 +48,7 @@ warn.lerna <- warn(
   female.mean = mean(female$d15N),
   num.particle = 500,
   female.sd = sd(female$d15N),
-  prior = c(0.2, 0.5, 1.6, 0.5, 2.5, 0.5, 8.1, 0.5),
+  prior = c(0.2, 0.2, 1.6, 0.2, 2.5, 0.2, 8.1, 0.2, 0, 0.7),
   tolerances = c(1.5, 0.7))
 
 ## Calculate probabilities for a given parameter range.
@@ -68,3 +68,4 @@ plot(warnprob.wnfood)
 plot(warnprob.age, is.image = TRUE)
 }
 \keyword{math}
+
