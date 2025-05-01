@@ -1,10 +1,13 @@
 Package: WARN
 Type: Package
 Title: Weaning Age Reconstruction with Nitrogen Isotope Analysis
-Version: 1.2-4
-Date: 2019-10-18
-Author: Takumi Tsutaya
-Maintainer: Takumi Tsutaya <tsutayatakumi@gmail.com>
+Version: 1.2-5
+Date: 2025-04-30
+Authors@R: 
+	person(given = "Takumi",
+		family = "Tsutaya",
+		role = c("aut", "cre"),
+		email = "tsutayatakumi@gmail.com")
 Depends: R (>= 3.0.0)
 Imports: graphics, grDevices, MASS, stats
 Description: This estimates precise weaning ages
@@ -16,5 +19,7 @@ Description: This estimates precise weaning ages
 Repository: CRAN
 License: GPL (>= 3)
 NeedsCompilation: no
-Packaged: 2019-10-18 08:04:51 UTC; sagi
-Date/Publication: 2019-10-18 08:30:02 UTC
+Packaged: 2025-05-01 05:24:30 UTC; sagi
+Author: Takumi Tsutaya [aut, cre]
+Maintainer: Takumi Tsutaya <tsutayatakumi@gmail.com>
+Date/Publication: 2025-05-01 05:40:02 UTC
